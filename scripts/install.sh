@@ -48,6 +48,21 @@ if [[ -x "$PROJECT_DIR/scripts/install-emulator-integration.sh" ]]; then
   bash "$PROJECT_DIR/scripts/install-emulator-integration.sh" || true
 fi
 
+# Grant the user service access to /dev/uhid for Steam's native Switch Pro HID path.
+UHID_RULE_SRC="$PROJECT_DIR/system/udev/70-ngc-imu-uaccess.rules"
+UHID_RULE_DST="/etc/udev/rules.d/70-ngc-imu-uaccess.rules"
+if [ -f "$UHID_RULE_SRC" ]; then
+  if sudo install -D -m 0644 "$UHID_RULE_SRC" "$UHID_RULE_DST" 2>/dev/null; then
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger --subsystem-match=misc --action=add 2>/dev/null || true
+    echo "installed $UHID_RULE_DST (UHID access for Steam gyro)"
+  else
+    echo "note: install UHID access rule manually:"
+    echo "  sudo install -D -m 0644 $UHID_RULE_SRC $UHID_RULE_DST"
+    echo "  sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=misc"
+  fi
+fi
+
 echo ">> installing bridge watchdog + BT helpers..."
 mkdir -p "$HOME/.local/bin"
 install -m 0755 system/bluetooth-always-on.sh "$HOME/.local/bin/bluetooth-always-on.sh"
