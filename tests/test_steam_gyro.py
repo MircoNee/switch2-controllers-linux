@@ -1,3 +1,5 @@
+import struct
+
 from ngc import protocol as P
 from ngc.steam_gyro import (
     _IMU_CAL,
@@ -23,6 +25,7 @@ def test_switch_pro_report_contains_buttons_sticks_and_three_imu_samples():
     assert report[6:9] == bytes.fromhex("000880")  # centered left stick
     assert report[9:12] == bytes.fromhex("ff0f00")  # right stick max/min
     assert report[13:25] == report[25:37] == report[37:49]
+    assert struct.unpack_from("<6h", report, 13) == (0, 0, 4096, 143, 0, 0)
 
 
 def test_switch_pro_handshake_and_device_info_replies():
