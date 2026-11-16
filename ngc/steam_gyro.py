@@ -174,13 +174,12 @@ def _pack_input(
 
     # SDL's Switch HIDAPI driver converts the raw HID gyro tuple to its
     # sensor frame as: SDL = (-HID_Y, +HID_Z, -HID_X).
-    # The previous mapping made physical yaw appear on Steam pitch, physical
-    # pitch on Steam roll, and physical roll on Steam yaw. Preserve each
-    # axis's established direction while correcting that cyclic permutation:
-    #   SDL pitch = -raw pitch, SDL roll = -raw roll, SDL yaw = -raw yaw.
+    # Relative to the previous mapping, invert Steam pitch and exchange the
+    # Steam roll/yaw axes, inverting the new roll direction:
+    #   SDL pitch = +raw pitch, SDL roll = -raw roll, SDL yaw = -raw yaw.
     # Solving SDL = (-HID_Y, +HID_Z, -HID_X):
-    #   HID X = raw yaw, HID Y = raw pitch, HID Z = -raw roll.
-    gx, gy, gz = gz, gx, -gy
+    #   HID X = raw yaw, HID Y = -raw pitch, HID Z = -raw roll.
+    gx, gy, gz = gy, -gx, gz
 
     # The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
     # native Pro reports use 14.2842 LSB/(deg/s). Accel is already 4096 LSB/g.
