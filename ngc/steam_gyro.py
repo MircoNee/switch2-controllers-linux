@@ -164,8 +164,17 @@ def _pack_input(
 
     ax, ay, az = accel
     gx, gy, gz = gyro
-    # Switch 2 reports use the same native axes as the Nintendo Pro 0x30
-    # format. The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
+
+    # Convert Switch 2 sensor coordinates to the coordinate convention used
+    # by SDL/Linux's Nintendo Pro Controller motion path. The DSU client
+    # presents the Switch 2 axes as (right, up, forward), while the Pro HID
+    # report is interpreted as (up, forward, right). Apply the same rotation
+    # to accelerometer and gyroscope samples:
+    #   HID X = -Switch2 Y, HID Y = +Switch2 Z, HID Z = -Switch2 X.
+    ax, ay, az = -ay, az, -ax
+    gx, gy, gz = -gy, gz, -gx
+
+    # The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
     # native Pro reports use 14.2842 LSB/(deg/s). Accel is already 4096 LSB/g.
     gyro_scale = 14.2842 / 16.4
     sample = struct.pack(
