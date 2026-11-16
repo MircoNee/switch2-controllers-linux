@@ -2,8 +2,9 @@
 
 Wireless **Nintendo Switch 2** controller support for Linux. The **NSO GameCube
 controller** and **Pro Controller 2** are tested and working — buttons, analog
-sticks/triggers, **rumble**, **gyro/accelerometer** (via a built-in DSU/cemuhook
-server), battery reporting, and reliable wake-from-sleep reconnection.
+sticks/triggers, **rumble**, **gyro/accelerometer** (via DSU for emulators and a native UHID Pro Controller
+interface for Steam Input), battery reporting, and reliable wake-from-sleep
+reconnection.
 **Joy-Con 2** has experimental, **untested** scaffolding (see the table below).
 
 The Switch 2 controllers use a proprietary Bluetooth LE (GATT) protocol that
@@ -27,8 +28,13 @@ fully in user space — no kernel modules, no root.
 - **Rumble**: HD rumble for Pro Controller 2 (real motor packets; Joy-Con 2
   paths exist but are untested); preset-based, edge-driven rumble for the NSO
   GameCube pad (no HD actuator).
-- **Gyro everywhere**: an embedded **DSU (cemuhook) UDP server** on
+- **Gyro for emulators**: an embedded **DSU (cemuhook) UDP server** on
   `127.0.0.1:26760` feeds accel/gyro to Dolphin, Cemu, Ryujinx, etc.
+- **Steam Input gyro (experimental)**: Pro Controller 2 is additionally exposed
+  through Linux `/dev/uhid` as a native Nintendo Switch Pro HID device. Its full
+  `0x30` reports include buttons, sticks, and three live IMU samples so Steam's
+  Nintendo HIDAPI path can expose gyro configuration. The old uinput pad is
+  retained as a fallback if UHID cannot be opened.
 - **Analog triggers + C-stick** on the NSO GameCube pad; calibrated sticks.
 - **Auto-reconnect** with bonding (no re-pairing after the first time).
 - **Desktop launchers** on Bazzite for first-time setup and pairing (no terminal
@@ -60,8 +66,9 @@ ngc.att        — minimal ATT client (read/write/notify) over L2CAP
 ngc.protocol   — input-report parsing, calibration, vibration, button maps
 ngc.device     — SwitchController: handshake, GATT discovery, LEDs, rumble
    │
-   ├─► ngc.gamepad — uinput virtual pad (buttons/axes/triggers + force-feedback)
-   └─► ngc.dsu     — DSU/cemuhook UDP server (motion) on 127.0.0.1:26760
+   ├─► ngc.steam_gyro — UHID native Switch Pro HID (Pro Controller 2 / Steam gyro)
+   ├─► ngc.gamepad    — uinput fallback + other controller models
+   └─► ngc.dsu        — DSU/cemuhook UDP server (motion) on 127.0.0.1:26760
    │
 ngc.bridge     — multi-controller manager: connect, reconnect, own gamepad+rumble
 ```
@@ -85,6 +92,8 @@ Key design choices:
 - `bleak==0.22.2` (BLE scanning during pairing) and `evdev>=1.6`
 - `/dev/uinput` writable by your user (Bazzite/most distros grant this via a
   udev ACL; otherwise add a udev rule)
+- `/dev/uhid` access for the Pro Controller 2 Steam Input gyro path (the
+  installer adds a logind `uaccess` rule; log out/in or reconnect the controller)
 
 ## Install
 
@@ -144,6 +153,31 @@ emulator at it:
 - **Ryujinx**: set the controller's motion backend to **CemuHook**, host
   `127.0.0.1`, port `26760`, matching slot.
 - **Cemu**: add the DSU server in the motion source settings.
+
+## Steam Input gyro (Pro Controller 2)
+
+The Pro Controller 2 is presented to Steam as a native Nintendo Switch Pro HID
+device through `/dev/uhid`, rather than as the bridge's ordinary Xbox-style
+uinput pad. This is important: Steam's Nintendo HIDAPI path expects the native
+Switch report protocol, including initialization replies and the full `0x30`
+input report with its three IMU samples. The DSU server remains available for
+emulators at the same time.
+
+1. Run `bash scripts/install.sh` so the `/dev/uhid` udev access rule is installed.
+2. Log out and back in (or reload the rule and reconnect the controller).
+3. Restart `nso-gc.service` and reconnect the Pro Controller 2.
+4. Restart Steam so it rediscovers the virtual Nintendo controller.
+5. Open the controller layout in Steam Input and configure **Gyro Behavior**.
+
+This path is experimental until verified on the target machine. If the service
+cannot open `/dev/uhid`, its log reports `native Steam HID unavailable` and
+falls back to the existing uinput gamepad; normal controls still work, but
+Steam-native gyro will not be available in that fallback mode. Check with:
+
+```bash
+journalctl --user -u nso-gc.service -f
+ls -l /dev/uhid
+```
 
 ## Rumble notes
 
