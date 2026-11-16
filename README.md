@@ -1,10 +1,10 @@
 # Switch 2 Controllers on Linux
 
 Wireless **Nintendo Switch 2** controller support for Linux. The **NSO GameCube
-controller** and **Pro Controller 2** are tested and working — buttons, analog
-sticks/triggers, **rumble**, **gyro/accelerometer** (via DSU for emulators and a native UHID Pro Controller
-interface for Steam Input), battery reporting, and reliable wake-from-sleep
-reconnection.
+controller** and **Pro Controller 2** are tested for buttons, analog
+sticks/triggers, rumble, and DSU gyro/accelerometer. A native UHID Pro Controller
+path for **Steam Input gyro** is implemented experimentally and still needs
+validation on real hardware.
 **Joy-Con 2** has experimental, **untested** scaffolding (see the table below).
 
 The Switch 2 controllers use a proprietary Bluetooth LE (GATT) protocol that
@@ -43,11 +43,11 @@ fully in user space — no kernel modules, no root.
 
 ## Supported controllers
 
-| Controller            | Status        | Buttons | Sticks | Triggers      | Rumble       | Gyro |
+| Controller            | Status        | Buttons | Sticks | Triggers      | Rumble       | DSU Gyro | Steam Input Gyro |
 | --------------------- | ------------- | ------- | ------ | ------------- | ------------ | ---- |
-| NSO GameCube          | ✅ tested      | ✅      | ✅     | ✅ analog L/R | ✅ presets   | ✅   |
-| Pro Controller 2      | ✅ tested      | ✅      | ✅     | digital ZL/ZR | ✅ HD rumble | ✅   |
-| Joy-Con 2 (L / R)     | ⚠️ untested   | ?       | ?      | ?             | ?            | ?    |
+| NSO GameCube          | ✅ tested      | ✅      | ✅     | ✅ analog L/R | ✅ presets   | ✅       | —                |
+| Pro Controller 2      | ✅ tested      | ✅      | ✅     | digital ZL/ZR | ✅ HD rumble | ✅       | ⚠️ experimental  |
+| Joy-Con 2 (L / R)     | ⚠️ untested   | ?       | ?      | ?             | ?            | ?       | —                |
 
 > **Joy-Con 2 is untested.** The code defines their product IDs, accepts them in
 > the scanner, and has per-side vibration UUIDs, so they may connect — but this
