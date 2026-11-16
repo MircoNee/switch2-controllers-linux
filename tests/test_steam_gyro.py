@@ -9,6 +9,7 @@ from ngc.steam_gyro import (
     _pack_input,
     _rumble_frame,
     _switch_reply,
+    SteamProHID,
 )
 
 
@@ -59,3 +60,13 @@ def test_factory_calibration_payload_sizes_and_spi_read():
 def test_rumble_frame_decoder():
     assert _rumble_frame(bytes.fromhex("00004040"), 0) == (0, 0)
     assert _rumble_frame(bytes.fromhex("00000000"), 0) is None
+
+
+def test_uhid_create2_event_uses_native_bluetooth_pro_identity():
+    event = SteamProHID("AA:BB:CC:DD:EE:FF")._create_event()
+    assert len(event) == 4376
+    assert struct.unpack_from("<I", event, 0)[0] == 11  # UHID_CREATE2
+    assert struct.unpack_from("<HHIIII", event, 260) == (
+        len(_REPORT_DESCRIPTOR), 0x05, 0x057E, 0x2009, 0x0210, 0
+    )
+    assert event[280:280 + len(_REPORT_DESCRIPTOR)] == _REPORT_DESCRIPTOR
