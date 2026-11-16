@@ -52,9 +52,9 @@ _REPORT_DESCRIPTOR = bytes.fromhex(
 )
 
 # Standard factory calibration blocks returned to HIDAPI during initialization.
-_STICK_CAL = bytes.fromhex("fff77f000880fff77f000880fff77fffff77f")
+_STICK_CAL = bytes.fromhex("fff77f000880fff77f000880fff77ffff77f")
 _IMU_CAL = bytes.fromhex(
-    "00000000000000400040004000000000000000003b343b343b34"
+    "0000000000000040004000400000000000003b343b343b34"
 )
 
 # Switch rumble encodes a 0..100 amplitude index in each motor frame.
