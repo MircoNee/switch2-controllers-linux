@@ -172,13 +172,14 @@ def _pack_input(
     #   HID X = -Switch2 Z, HID Y = +Switch2 X, HID Z = +Switch2 Y.
     ax, ay, az = -az, ax, ay
 
-    # Gyroscope needs its own permutation; its axes do not share the
-    # accelerometer's orientation in the observed DSU/SDL mappings:
-    #   DSU pitch up  -> SDL yaw right
-    #   DSU roll left -> SDL pitch up
-    #   DSU yaw left  -> SDL roll right
-    # Therefore HID pitch/roll/yaw = DSU roll/-yaw/pitch.
-    gx, gy, gz = gy, -gz, gx
+    # SDL's Switch HIDAPI driver converts the raw HID gyro tuple to its
+    # sensor frame as: SDL = (-HID_Y, +HID_Z, -HID_X).
+    # Our DSU tuple is ordered (pitch, yaw, roll). The measured mapping is:
+    #   DSU pitch -> SDL yaw
+    #   DSU roll  -> -SDL pitch
+    #   DSU yaw   -> -SDL roll
+    # Solving the SDL conversion gives HID (X, Y, Z) = (DSU yaw, DSU roll, DSU pitch).
+    gx, gy, gz = gy, gz, gx
 
     # The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
     # native Pro reports use 14.2842 LSB/(deg/s). Accel is already 4096 LSB/g.
