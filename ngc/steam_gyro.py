@@ -164,17 +164,18 @@ def _pack_input(
 
     ax, ay, az = accel
     gx, gy, gz = gyro
-    # The bridge's evdev sensor convention is 4096 LSB/g and 164 LSB/(deg/s).
-    # Nintendo's native report uses 4096 LSB/g and 14.2842 LSB/(deg/s).
-    gyro_scale = 14.2842 / 164.0
+    # Switch 2 reports use the same native axes as the Nintendo Pro 0x30
+    # format. The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
+    # native Pro reports use 14.2842 LSB/(deg/s). Accel is already 4096 LSB/g.
+    gyro_scale = 14.2842 / 16.4
     sample = struct.pack(
         "<6h",
-        max(-32768, min(32767, -az)),
-        max(-32768, min(32767, -ax)),
+        max(-32768, min(32767, ax)),
         max(-32768, min(32767, ay)),
-        max(-32768, min(32767, round(-gz * gyro_scale))),
-        max(-32768, min(32767, round(-gx * gyro_scale))),
+        max(-32768, min(32767, az)),
+        max(-32768, min(32767, round(gx * gyro_scale))),
         max(-32768, min(32767, round(gy * gyro_scale))),
+        max(-32768, min(32767, round(gz * gyro_scale))),
     )
     for offset in (13, 25, 37):
         out[offset:offset + 12] = sample
