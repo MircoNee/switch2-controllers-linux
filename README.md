@@ -98,7 +98,7 @@ Key design choices:
 ## Install
 
 ```bash
-git clone https://github.com/trevlars/switch2-controllers-linux.git ~/nso-gc-bazzite
+git clone -b steam-input-gyro https://github.com/MircoNee/switch2-controllers-linux.git ~/nso-gc-bazzite
 cd ~/nso-gc-bazzite
 bash scripts/install.sh
 ```
