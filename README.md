@@ -44,7 +44,7 @@ fully in user space — no kernel modules, no root.
 ## Supported controllers
 
 | Controller            | Status        | Buttons | Sticks | Triggers      | Rumble       | DSU Gyro | Steam Input Gyro |
-| --------------------- | ------------- | ------- | ------ | ------------- | ------------ | ---- |
+| --------------------- | ------------- | ------- | ------ | ------------- | ------------ | -------- | ---------------- |
 | NSO GameCube          | ✅ tested      | ✅      | ✅     | ✅ analog L/R | ✅ presets   | ✅       | —                |
 | Pro Controller 2      | ✅ tested      | ✅      | ✅     | digital ZL/ZR | ✅ HD rumble | ✅       | ⚠️ experimental  |
 | Joy-Con 2 (L / R)     | ⚠️ untested   | ?       | ?      | ?             | ?            | ?       | —                |
