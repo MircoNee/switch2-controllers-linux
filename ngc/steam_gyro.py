@@ -174,17 +174,13 @@ def _pack_input(
 
     # SDL's Switch HIDAPI driver converts the raw HID gyro tuple to its
     # sensor frame as: SDL = (-HID_Y, +HID_Z, -HID_X).
-    # The working Dolphin/Cemu bindings established the required direction:
-    #   Dolphin pitch up   <- SDL gyro yaw left
-    #   Dolphin roll left  <- SDL gyro pitch down
-    #   Dolphin yaw left   <- SDL gyro roll right
-    # With the DSU tuple ordered (pitch, yaw, roll), the native SDL axes must
-    # therefore be (-DSU roll, -DSU pitch, -DSU yaw). Inverting the first
-    # DSU component here makes Steam/SDL provide those directions directly,
-    # without per-game manual axis remapping.
+    # The previous mapping made physical yaw appear on Steam pitch, physical
+    # pitch on Steam roll, and physical roll on Steam yaw. Preserve each
+    # axis's established direction while correcting that cyclic permutation:
+    #   SDL pitch = -raw pitch, SDL roll = -raw roll, SDL yaw = -raw yaw.
     # Solving SDL = (-HID_Y, +HID_Z, -HID_X):
-    #   HID X = DSU yaw, HID Y = DSU roll, HID Z = -DSU pitch.
-    gx, gy, gz = gy, gz, -gx
+    #   HID X = raw yaw, HID Y = raw pitch, HID Z = -raw roll.
+    gx, gy, gz = gz, gx, -gy
 
     # The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
     # native Pro reports use 14.2842 LSB/(deg/s). Accel is already 4096 LSB/g.
