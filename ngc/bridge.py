@@ -31,6 +31,7 @@ from .device import SwitchController
 from .dsu import DSUServer
 from .gamepad import SwitchGamepad
 from .motion_evdev import MotionEvdev
+from .steam_gyro import SteamProHID
 from .status import BridgeState, ControllerState, clear_state, write_state
 
 # Written by system/bazzite-set-player-leds.py when emulator player order changes.
@@ -500,6 +501,7 @@ class _Worker:
         self.on_topology_change = on_topology_change
         self.slot = max(0, min(3, entry.player - 1))
         self.gamepad: Optional[SwitchGamepad] = None
+        self.steam_hid: Optional[SteamProHID] = None
         self.motion: Optional[MotionEvdev] = None
         self._gamepad_product: Optional[int] = None
         self.controller: Optional[SwitchController] = None
@@ -518,7 +520,9 @@ class _Worker:
 
     def _on_input(self, ctrl: SwitchController, report: P.InputReport) -> None:
         (lx, ly), (rx, ry), lt, rt = ctrl.calibrated_input(report)
-        if self.gamepad is not None:
+        if self.steam_hid is not None:
+            self.steam_hid.update(report, (lx, ly), (rx, ry))
+        elif self.gamepad is not None:
             self.gamepad.update(report.buttons, (lx, ly), (rx, ry), lt, rt)
         if self.motion is not None:
             self.motion.update(report)
@@ -542,17 +546,43 @@ class _Worker:
 
     def _ensure_gamepad(self, ctrl: SwitchController) -> None:
         pid = ctrl.product_id
-        if self.gamepad is not None and self._gamepad_product == pid:
-            return
+        if self._gamepad_product == pid:
+            if pid == P.PRO_CONTROLLER2_PID and (self.steam_hid is not None or self.gamepad is not None):
+                return
+            if pid != P.PRO_CONTROLLER2_PID and self.gamepad is not None:
+                return
+        if self.steam_hid is not None:
+            self.steam_hid.close()
+            self.steam_hid = None
         if self.gamepad is not None:
             self.gamepad.rumble_cb = None
             self.gamepad.close()
             self.gamepad = None
-            self._gamepad_product = None
+        self._gamepad_product = None
         if self.motion is not None:
             self.motion.close()
             self.motion = None
         name = f"{ctrl.name} (P{self.entry.player})"
+
+        # Steam Input's native Nintendo HIDAPI path consumes the Switch Pro
+        # 0x30 report, including its three IMU samples. A separate uinput
+        # gamepad would appear as a duplicate controller, so use UHID as the
+        # primary device and retain the old uinput path only as a fallback.
+        if pid == P.PRO_CONTROLLER2_PID:
+            native = SteamProHID(
+                self.entry.mac,
+                rumble_callback=self._on_rumble if self.config.enable_rumble else None,
+            )
+            try:
+                native.start()
+                self.steam_hid = native
+                self._gamepad_product = pid
+                logger.info("Steam-native Pro Controller with gyro ready: %s", name)
+                return
+            except Exception as exc:  # noqa: BLE001
+                native.close()
+                logger.warning("native Steam HID unavailable (%s); using uinput fallback", exc)
+
         self.gamepad = SwitchGamepad(
             name=name,
             button_map=self.config_button_map(pid),
@@ -607,6 +637,10 @@ class _Worker:
             return False
 
     def _teardown_partial(self, ctrl: Optional[SwitchController] = None) -> None:
+        if self.steam_hid is not None:
+            self.steam_hid.close()
+            self.steam_hid = None
+            self._gamepad_product = None
         if ctrl is not None:
             try:
                 ctrl.close()
@@ -622,6 +656,10 @@ class _Worker:
             self.motion = None
 
     def _teardown_session(self, *, full: bool = False) -> None:
+        if self.steam_hid is not None:
+            self.steam_hid.close()
+            self.steam_hid = None
+            self._gamepad_product = None
         if self.gamepad is not None:
             self.gamepad.rumble_cb = None
             if full:
