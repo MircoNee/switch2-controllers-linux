@@ -262,7 +262,6 @@ class SteamProHID:
         self._write(event)
 
     def _report_loop(self) -> None:
-        import time
         while not self._stop.wait(0.015):
             try:
                 self._send_input(self._next_report())
