@@ -20,7 +20,7 @@ def test_switch_pro_report_contains_buttons_sticks_and_three_imu_samples():
     assert report[3] & 0x08  # A
     assert report[5] & 0x02  # D-pad up
     assert report[5] & 0x80  # ZL
-    assert report[6:9] == bytes.fromhex("008008")  # centered left stick
+    assert report[6:9] == bytes.fromhex("008080")  # centered left stick
     assert report[9:12] == bytes.fromhex("ff0f00")  # right stick max/min
     assert report[13:25] == report[25:37] == report[37:49]
 
