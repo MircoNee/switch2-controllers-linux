@@ -165,14 +165,16 @@ def _pack_input(
     ax, ay, az = accel
     gx, gy, gz = gyro
 
-    # Convert Switch 2 sensor coordinates to the coordinate convention used
-    # by SDL/Linux's Nintendo Pro Controller motion path. The DSU client
-    # presents the Switch 2 axes as (right, up, forward), while the Pro HID
-    # report is interpreted as (up, forward, right). Apply the same rotation
-    # to accelerometer and gyroscope samples:
-    #   HID X = -Switch2 Y, HID Y = +Switch2 Z, HID Z = -Switch2 X.
-    ax, ay, az = -ay, az, -ax
-    gx, gy, gz = -gy, gz, -gx
+    # Convert Switch 2 sensor coordinates to the coordinate convention
+    # observed in SDL's Nintendo Pro Controller sensor node. Comparison with
+    # the DSU output showed this signed permutation:
+    #   DSU right   -> SDL up
+    #   DSU up      -> SDL forward
+    #   DSU forward -> SDL left
+    # Apply the inverse orientation to both accelerometer and gyro samples:
+    #   HID X = -Switch2 Z, HID Y = +Switch2 X, HID Z = +Switch2 Y.
+    ax, ay, az = -az, ax, ay
+    gx, gy, gz = -gz, gx, gy
 
     # The bridge's DSU path interprets gyro as 16.4 LSB/(deg/s);
     # native Pro reports use 14.2842 LSB/(deg/s). Accel is already 4096 LSB/g.
