@@ -224,6 +224,8 @@ This stands on the shoulders of prior community work:
   — DSU server reference.
 - [v1993/cemuhook-protocol](https://github.com/v1993/cemuhook-protocol)
   — the cemuhook UDP protocol documentation.
+- [LizardByte/libvirtualhid](https://github.com/LizardByte/libvirtualhid)
+  — reference for the Linux UHID Nintendo Switch Pro descriptor and native report protocol.
 - [bleak](https://github.com/hbldh/bleak) and
   [python-evdev](https://github.com/gvalkov/python-evdev).
 
